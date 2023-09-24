@@ -239,8 +239,46 @@ read_word:
 ; Возвращает в rax: число, rdx : его длину в символах
 ; rdx = 0 если число прочитать не удалось
 parse_uint:
-    xor rax, rax
-    ret
+     mov r8, 0 ; счётчик символов
+    mov rsi, rsp
+    .loop:
+        mov al, byte[rdi+r8]
+
+        sub al, '0' ; вычитаем код символа '0'
+
+        cmp al, 10
+        jg .exit ; проверяем, является ли этот символ числом (т.е. в диапазоне от 0 до 10)
+
+        cmp al, 0
+        jl .exit ; проверяем, является ли этот символ числом (т.е. в диапазоне от 0 до 10)
+
+        dec rsi
+        mov byte[rsi], al
+        inc r8
+
+        jmp .loop
+    .exit:
+        ; проверка на количество символов
+        ; перемещение в rax числа из стека
+        mov r10, 0
+        xor rax, rax ; обнуляем rax
+        mov r9, 10
+        mov rsi, rsp ; указатель на старший разряд числа(в стеке)
+    .read_int_loop:
+        cmp r10, r8
+        je .end
+
+        mul r9 ; умножаем число на 10
+
+        dec rsi ; меняем положение указателя на следующую цифру числа
+        add al, byte[rsi] ; прибавляем цифру следующего разряда
+
+        inc r10
+        jmp .read_int_loop
+    .end:
+        mov rdx, r10
+        ret 
+
 
 
 
@@ -258,7 +296,44 @@ parse_int:
 ; Копирует строку в буфер
 ; Возвращает длину строки если она умещается в буфер, иначе 0
 string_copy:
-    xor rax, rax
-    ret
+
+    ;rdi-указатель на строку, rsi-указатель на буфер, rdx-длина буфера
+    .check_string_size:
+        push rdi
+        push rsi
+        push rdx
+        call string_length; rax=Длина строки
+        pop rdx
+        pop rsi
+        pop rdi
+
+        cmp rax, rdx
+        jg .err_exit
+        
+        mov r8, rax ; количество символов строки, которое осталось поместить в буфер
+        push rax
+        
+    .loop:
+        cmp r8, 0
+        je .exit
+
+        xor rax, rax
+
+        mov al, byte[rdi] ; посимвольно помещаем значения из строки в буфер
+        mov byte[rsi], al
+
+        inc rsi
+        inc rdi
+
+        dec r8
+        jmp .loop
+    .exit:
+        pop rax ; возвращаем значение длины строки 
+        ret
+    .err_exit:
+        xor rax, rax
+        ret
+
+
 
 
