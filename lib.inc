@@ -270,6 +270,9 @@ parse_uint:
         ret
 
 
+
+
+
 ; Принимает указатель на строку, пытается
 ; прочитать из её начала знаковое число.
 ; Если есть знак, пробелы между ним и числом не разрешены.
@@ -277,6 +280,19 @@ parse_uint:
 ; rdx = 0 если число прочитать не удалось
 parse_int:
     xor rax, rax
+    mov al, byte[rdi]
+    cmp rax, 0x2D ; проверка на минус
+    jne .positive_number
+
+    .negative_number:
+        inc rdi
+        call parse_uint
+        inc rdx ; учитываем минус
+        neg rax
+        ret
+    .positive_number:
+        call parse_uint
+        ret
     ret 
 
 ; Принимает указатель на строку, указатель на буфер и длину буфера
