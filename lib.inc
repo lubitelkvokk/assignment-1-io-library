@@ -306,6 +306,7 @@ string_copy:
         push rsi
         push rdx
         call string_length; rax=Длина строки
+        inc rax ; увеличиваем длину, учитывая, что нужно записать 0(конец строки)
         pop rdx
         pop rsi
         pop rdi
